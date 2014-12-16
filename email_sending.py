@@ -6,44 +6,43 @@
 import sys, os, requests, json
 from flask import request
 path = os.path.dirname(os.path.abspath(__file__))
+print(path)
 if not path in sys.path:
-    sys.path.append(path)
+	print(path)
+	sys.path.append(path)
 from flask import Flask
-print 'Flask Imported'
+import keys
+print('Flask Imported')
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def hello_world():
-    print 'Printing Message to COnsone'
+    print('Printing Message to COnsone')
     if request.method == 'POST':
-        print 'Post request received'
+        #print 'Post request received'
         #sender = request.POST.get('sender')
         #recipient = request.POST.get('recipient')
         #data = request.data
         #dataDict = json.loads(data)
         #print dataDict
-        print request.headers
+        #print request.headers
         #print request.json
         sender    = request.values.get('sender')
         recipient = request.values.get('recipient')
         subject   = request.values.get('subject', '')
         body_plain = request.args.get('body-plain', '')
         #body_without_quotes = request.args.get('stripped-text', '')
-        print 'sender:' ,sender, 'recipient:', recipient, subject
+        #print 'sender:' ,sender, 'recipient:', recipient, subject
         #print body_plain
         #print body_without_quotes
         #print request.values
     return 'Hello World!'
 
-
-
-
-
 def send_simple_message():
     return requests.post(
-        #"https://api.mailgun.net/v2/sandboxfc48ae5340e746ad99c9ab6079f3643d.mailgun.org",
-        "https://api.mailgun.net/v2/livingcitynola.com/messages",
-        auth=("api", "DumDaDumDumDumDumDum"),
+        keys.mailgun_login,
+
+        auth=("api", keys.mailgun_API_key),
         data={"from": "Executive Email <me@samples.mailgun.org>",
               "to": "kisna72@gmail.com",
               "subject": "Hello",
@@ -51,13 +50,43 @@ def send_simple_message():
 
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+def receive_email():
+	'''This is a route method that receives email as post request from Say mailgun.
+	'''
+	pass
+
+def get_executive_list(org_name):
+	'''Go to database and fetch executive list for org_name
+	args:
+		org_name (String) : name of organization.
+	returns:
+		list of executives.
+	'''
+	#Since Database doesn't exist right now, I am just returning a 
+	#generic list of email addresses.
+	list_of_emails = ['kisna72@gmail.com', 'krishnaregmi@outlook.com']
+	return list_of_emails
+
+#Test get_executive_list
+#print(get_executive_list('asme'))
+def get_member_list(org_name):
+	'''Go to database and fetch member list for org_name
+	args:
+		org_name (String) : name of organization.
+	returns:
+		list of executives.
+	'''
+	#Since Database doesn't exist right now, I am just returning a 
+	#generic list of email addresses.
+	list_of_emails = ['kisna72@gmail.com', 'krishnaregmi@outlook.com']
+	return list_of_emails
+
+
+#if __name__ == '__main__':
+#    app.run(host='0.0.0.0')
 #message = send_simple_message()
 #print messasge.text
 
-##Flow:
-# Receive Email. If the 
 
 # if __name__ == "__main__":
 #     app.run()

@@ -3,7 +3,7 @@
 #Uses micro web framework Flask to send the http requests and receive post requests from mailgun.
 #
 #
-import sys, os, requests, json
+import sys, os, requests, json, re
 
 path = os.path.dirname(os.path.abspath(__file__))
 print(path)
@@ -12,9 +12,25 @@ if not path in sys.path:
     sys.path.append(path)
 from flask import Flask
 from flask import request
+import helper_functions as hf
 import keys
+#import keys
 print('Flask Imported')
 app = Flask(__name__)
+
+#Flow
+# 1. Receive an Email.
+# 2. Check for sent to :
+#     It can either be a organization or a person.
+# 3. If it is organization, that means the user wants to send the email to that organization.
+# 4. Make Sure that this user has the authority to send email to that org.
+# 5. Next, Make a databse entry for this email. Mark requested.
+# 6. Send Emails to executives. If successfull, Mark Sent, and add Email_Users_TIme as 30 mins ahead of time.
+# 7. Keep checking for database for Email_Users_TIme. If the time is older than the said time, send Users Emails.
+# 8. If you receive a reply from a user, check if he is a executive.
+# 9. IF EXECUTIVE, then find the email sent, using the data from the email, then mark it cancelled.
+# 10. Email the original sender that his email has been cancelled.
+
 
 @app.route('/', methods=['GET', 'POST'])
 def hello_world():
@@ -68,51 +84,45 @@ def receive_email():
         }
         sender : 
     '''
-    print('Printing Message to COnsone')
-    if request.method == 'POST':
-        a = 2
-        sender    = request.values.get('sender')
-        recipient = request.values.get('recipient')
-        subject   = request.values.get('subject', '')
-        body_plain = request.args.get('body-plain', '')
-        #body_without_quotes = request.args.get('stripped-text', '')
-    #call_executive email sendint function
-    #call list email in the waiting list to 
-    return 'Hello World!'
-    pass
+    #Must return json_data
+    #In thei future, receive a Post Request, Check if it is Post. Then convert it into JSON Format, 
+    #Next return the JSON Format. Must use for key, value in request.values.iteritems()
+    json_file = '/Users/krishnaregmi/Documents/OneDrive/12-projects-2015/executive-email/email_2.json'
+    with open(json_file, 'r') as f:
+        raw_data = f.read()
+    json_data = json.loads(raw_data)
+    return json_data
+#Test receive_email.
+#t = receive_email()
+#print t['Date']
 
-def get_executive_list(org_name):
-    '''Go to database and fetch executive list for org_name
-    args:
-        org_name (String) : name of organization.
-    returns:
-        list of executives.
+def send_single_email(email_address, json_data):
+    '''Takes in the json_data and a email_address and then sends the email through mailgun
+        The Idea is to forward the email to the email_address.
     '''
-    #Since Database doesn't exist right now, I am just returning a 
-    #generic list of email addresses.
-    list_of_emails = ['kisna72@gmail.com', 'krishnaregmi@outlook.com']
-    return list_of_emails
+    print 'Sending Single Email'
+    json_data['To'] = email_address
+    print json_data
+    return requests.post(
+        keys.mailgun_login,
 
-#Test get_executive_list
-#print(get_executive_list('asme'))
-def get_member_list(org_name):
-    '''Go to database and fetch member list for org_name
-    args:
-        org_name (String) : name of organization.
-    returns:
-        list of executives.
-    '''
-    #Since Database doesn't exist right now, I am just returning a 
-    #generic list of email addresses.
-    list_of_emails = ['kisna72@gmail.com', 'krishnaregmi@outlook.com']
-    return list_of_emails
+        auth=("api", keys.mailgun_API_key),
+        data={"from": json_data['From'],
+              "to": email_address,
+              "subject": json_data['Subject'],
+              "text": json_data['body-plain'],
+              "html":json_data['body-html']}
+              )
+    
+#Test get_org_name
+t = receive_email()
+p = hf.get_org_name(t)
+email_lst = hf.get_executive_list(p)
+msg = send_single_email(email_lst[0], t)
+print email_lst
+print msg
 
 
+sys.exit()
 if __name__ == '__main__':
    app.run(host='0.0.0.0')
-#message = send_simple_message()
-#print messasge.text
-
-
-# if __name__ == "__main__":
-#     app.run()
